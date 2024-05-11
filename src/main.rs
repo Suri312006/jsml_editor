@@ -17,7 +17,7 @@ mod ui;
 
 fn main() -> Result<(), Box<dyn Error>> {
     //setup terminal
-    enable_raw_mode();
+    let _ = enable_raw_mode();
 
     let mut stderr = io::stderr();
 
