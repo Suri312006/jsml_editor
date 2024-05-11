@@ -1,4 +1,4 @@
-use crossterm::event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode};
+use crossterm::event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind};
 use crossterm::execute;
 use crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
@@ -6,7 +6,9 @@ use crossterm::terminal::{
 
 use ratatui::backend::{Backend, CrosstermBackend};
 use ratatui::Terminal;
+use ui::ui;
 
+use std::error::Error;
 use std::io;
 
 use app::{App, CurrentScreen, CurrentlyEditing};
@@ -25,7 +27,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let backend = CrosstermBackend::new(stderr);
 
-    let mut term = Terminal::new(backend);
+    let mut term = Terminal::new(backend)?;
 
     // creating and running the app
     let mut app = App::new();
@@ -86,7 +88,7 @@ fn run_app<B: Backend>(term: &mut Terminal<B>, app: &mut App) -> io::Result<bool
                     _ => {}
                 },
 
-                CurrentScreen::Editing if key.kind == KeyEventKind::Press => match key.code {
+                CurrentScreen::Editing if key.kind ==  KeyEventKind::Press => match key.code {
                     KeyCode::Enter => {
                         if let Some(editing) = &app.currently_editing {
                             match editing {
@@ -109,13 +111,29 @@ fn run_app<B: Backend>(term: &mut Terminal<B>, app: &mut App) -> io::Result<bool
                                 CurrentlyEditing::Value => {
                                     app.value_input.pop();
                                 }
-
-                                
                             }
                         }
                     }
+                    KeyCode::Tab => {
+                        app.toggle_editing();
+                    }
+                    KeyCode::Char(value) => {
+                        if let Some(editing) = &app.currently_editing {
+                            match editing {
+                                CurrentlyEditing::Key => {
+                                    app.key_input.push(value);
+                                }
+                                CurrentlyEditing::Value => {
+                                    app.value_input.push(value);
+                                }
+                            }
+                        }
+                    }
+                    _ => {}
                 },
+                _ => {}
             }
-        }
+        } 
     }
+
 }
